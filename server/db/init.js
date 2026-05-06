@@ -12,6 +12,7 @@ const initDb = async () => {
         role TEXT NOT NULL DEFAULT 'Staff',
         full_name TEXT,
         mobile TEXT,
+        status TEXT DEFAULT 'Active',
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         deleted_at DATETIME
       )
@@ -138,5 +139,6 @@ const initDb = async () => {
     console.error('❌ Database initialization failed:', err);
   }
 };
+
 
 module.exports = initDb;

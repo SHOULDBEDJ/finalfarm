@@ -22,6 +22,11 @@ app.use(cors({
 app.use(express.json());
 app.use(cookieParser());
 
+// Base Route
+app.get('/', (req, res) => {
+  res.send('🏡 16 Eyes Farm House API is running. Visit /api/health for status.');
+});
+
 // Health Check
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });

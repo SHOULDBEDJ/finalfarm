@@ -13,7 +13,7 @@ exports.login = async (req, res) => {
 
   try {
     const result = await db.execute({
-      sql: 'SELECT * FROM profiles WHERE username = ?',
+      sql: 'SELECT * FROM users WHERE username = ? AND deleted_at IS NULL',
       args: [username]
     });
 
@@ -22,32 +22,17 @@ exports.login = async (req, res) => {
     }
 
     const user = result.rows[0];
-    const validPassword = await bcrypt.compare(password, user.password_hash);
+    const validPassword = await bcrypt.compare(password, user.password);
 
     if (!validPassword) {
       return res.status(401).json({ error: 'Invalid username or password' });
     }
 
-    // Get user roles
-    const rolesResult = await db.execute({
-      sql: 'SELECT role FROM user_roles WHERE user_id = ?',
-      args: [user.id]
-    });
-    
-    const roles = rolesResult.rows.map(r => r.role);
-    const primaryRole = roles.includes('SuperAdmin') ? 'SuperAdmin' : roles.includes('Admin') ? 'Admin' : 'Staff';
-
     const token = jwt.sign(
-      { id: user.id, username: user.username, role: primaryRole },
+      { id: user.id, username: user.username, role: user.role },
       JWT_SECRET,
       { expiresIn: '7d' }
     );
-
-    // Update last login
-    await db.execute({
-      sql: 'UPDATE profiles SET last_login_at = ? WHERE id = ?',
-      args: [new Date().toISOString(), user.id]
-    });
 
     const isProduction = process.env.NODE_ENV === 'production';
 
@@ -64,9 +49,8 @@ exports.login = async (req, res) => {
         id: user.id,
         username: user.username,
         fullName: user.full_name,
-        email: user.email,
-        avatarUrl: user.avatar_url,
-        role: primaryRole
+        mobile: user.mobile,
+        role: user.role
       },
       token
     });
@@ -90,7 +74,7 @@ exports.logout = (req, res) => {
 exports.getMe = async (req, res) => {
   try {
     const result = await db.execute({
-      sql: 'SELECT id, username, full_name, email, avatar_url FROM profiles WHERE id = ?',
+      sql: 'SELECT id, username, full_name, mobile, role FROM users WHERE id = ? AND deleted_at IS NULL',
       args: [req.user.id]
     });
 
@@ -104,9 +88,8 @@ exports.getMe = async (req, res) => {
       id: user.id,
       username: user.username,
       fullName: user.full_name,
-      email: user.email,
-      avatarUrl: user.avatar_url,
-      role: req.user.role
+      mobile: user.mobile,
+      role: user.role
     });
   } catch (err) {
     console.error('Get me error:', err);

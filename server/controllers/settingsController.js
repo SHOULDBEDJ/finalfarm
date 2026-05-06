@@ -25,6 +25,7 @@ exports.updateSettings = async (req, res) => {
   const body = { ...req.body };
   delete body.id;
   delete body.updated_at;
+  delete body.created_at;
   
   const fields = Object.keys(body);
   const values = Object.values(body);
@@ -47,7 +48,7 @@ exports.updateSettings = async (req, res) => {
 
 exports.getTimeSlots = async (req, res) => {
   try {
-    const result = await db.execute('SELECT * FROM time_slots ORDER BY start_time');
+    const result = await db.execute('SELECT * FROM time_slots WHERE deleted_at IS NULL ORDER BY start_time');
     res.json(result.rows);
   } catch (err) {
     res.status(500).json({ error: 'Server error' });
@@ -102,7 +103,10 @@ exports.deleteTimeSlot = async (req, res) => {
     if (check.rows[0].count > 0) {
       return res.status(409).json({ error: 'Cannot delete: slot has existing bookings' });
     }
-    await db.execute({ sql: 'DELETE FROM time_slots WHERE id = ?', args: [req.params.id] });
+    await db.execute({
+      sql: 'UPDATE time_slots SET deleted_at = ? WHERE id = ?',
+      args: [new Date().toISOString(), req.params.id]
+    });
     res.json({ message: 'Deleted' });
   } catch (err) {
     res.status(500).json({ error: 'Server error' });
@@ -115,12 +119,16 @@ exports.backupData = async (req, res) => {
   }
 
   try {
-    const tables = ['profiles', 'user_roles', 'time_slots', 'bookings', 'settings', 'income_types', 'incomes', 'expense_types', 'expenses', 'activity_log'];
+    const tables = ['users', 'time_slots', 'bookings', 'settings', 'transaction_types', 'income', 'expenses', 'activity_logs'];
     const backup = {};
 
     for (const table of tables) {
-      const result = await db.execute(`SELECT * FROM ${table}`);
-      backup[table] = result.rows;
+      try {
+        const result = await db.execute(`SELECT * FROM ${table}`);
+        backup[table] = result.rows;
+      } catch (e) {
+        console.warn(`Backup table ${table} failed:`, e.message);
+      }
     }
 
     res.json({
@@ -143,11 +151,6 @@ exports.restoreData = async (req, res) => {
   if (!data) return res.status(400).json({ error: 'No data provided' });
 
   try {
-    const requiredTables = ['profiles', 'bookings', 'settings'];
-    for (const t of requiredTables) {
-      if (!data[t]) throw new Error(`Missing table data: ${t}`);
-    }
-
     const tables = Object.keys(data);
     for (const table of tables) {
       const rows = data[table];
@@ -188,7 +191,7 @@ exports.wipeData = async (req, res) => {
 
   try {
     const userResult = await db.execute({
-      sql: 'SELECT password_hash FROM profiles WHERE username = ?',
+      sql: 'SELECT password FROM users WHERE username = ?',
       args: [username]
     });
 
@@ -196,17 +199,15 @@ exports.wipeData = async (req, res) => {
       return res.status(401).json({ error: 'Invalid verification credentials' });
     }
 
-    const valid = await bcrypt.compare(password, userResult.rows[0].password_hash);
+    const valid = await bcrypt.compare(password, userResult.rows[0].password);
     if (!valid) {
       return res.status(401).json({ error: 'Invalid verification credentials' });
     }
 
-    const tablesToWipe = ['activity_log', 'expenses', 'incomes', 'bookings', 'user_roles', 'profiles'];
+    const tablesToWipe = ['activity_logs', 'expenses', 'income', 'bookings', 'users'];
     for (const table of tablesToWipe) {
-      if (table === 'profiles') {
-        await db.execute({ sql: 'DELETE FROM profiles WHERE id != ?', args: [req.user.id] });
-      } else if (table === 'user_roles') {
-        await db.execute({ sql: 'DELETE FROM user_roles WHERE user_id != ?', args: [req.user.id] });
+      if (table === 'users') {
+        await db.execute({ sql: 'DELETE FROM users WHERE id != ?', args: [req.user.id] });
       } else {
         await db.execute(`DELETE FROM ${table}`);
       }

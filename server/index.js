@@ -11,8 +11,13 @@ const financeRoutes = require('./routes/financeRoutes');
 const activityRoutes = require('./routes/activityRoutes');
 const userRoutes = require('./routes/userRoutes');
 
+const initDb = require('./db/init');
+
 const app = express();
 const PORT = process.env.PORT || 5000;
+
+// Auto-initialize Database
+initDb();
 
 // Middleware
 app.use(cors({

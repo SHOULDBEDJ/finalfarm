@@ -18,13 +18,15 @@ interface BookingRow {
 export default function Dashboard() {
   const [bookings, setBookings] = useState<BookingRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const load = async () => {
     try {
       const data = await api.get<BookingRow[]>("/bookings");
-      setBookings(data);
+      setBookings(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error("Failed to load dashboard bookings:", err);
+      setError("Unable to load data. Please refresh.");
     } finally {
       setLoading(false);
     }
@@ -36,19 +38,31 @@ export default function Dashboard() {
     return () => clearInterval(t);
   }, []);
 
-  const today = todayIST();
-  const { y, m } = nowYearMonthIST();
-  const [weekStart, weekEnd] = thisWeekRangeIST();
+  // Safe calculation helper
+  const getStats = () => {
+    try {
+      const today = todayIST();
+      const { y, m } = nowYearMonthIST();
+      const [weekStart, weekEnd] = thisWeekRangeIST();
 
-  const total = bookings.length;
-  const todays = bookings.filter((b) => b.booking_date === today).length;
-  const monthly = bookings.filter((b) => {
-    const [by, bm] = b.booking_date.split("-").map(Number);
-    return by === y && bm === m;
-  }).length;
-  const weekly = bookings.filter((b) => b.booking_date >= weekStart && b.booking_date <= weekEnd).length;
-  const upcoming = bookings.filter((b) => b.status === "Confirmed" && b.booking_date > today).length;
-  const recent = bookings.slice(0, 10);
+      return {
+        total: bookings.length,
+        todays: bookings.filter((b) => b.booking_date === today).length,
+        monthly: bookings.filter((b) => {
+          const [by, bm] = b.booking_date.split("-").map(Number);
+          return by === y && bm === m;
+        }).length,
+        weekly: bookings.filter((b) => b.booking_date >= weekStart && b.booking_date <= weekEnd).length,
+        upcoming: bookings.filter((b) => b.status === "Confirmed" && b.booking_date > today).length,
+        recent: bookings.slice(0, 10)
+      };
+    } catch (e) {
+      console.error("Stats calculation error:", e);
+      return { total: 0, todays: 0, monthly: 0, weekly: 0, upcoming: 0, recent: [] };
+    }
+  };
+
+  const { total, todays, monthly, weekly, upcoming, recent } = getStats();
 
   return (
     <div className="space-y-6">

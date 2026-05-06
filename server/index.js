@@ -46,8 +46,12 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Internal server error' });
 });
 
-app.listen(PORT, () => {
-  console.log(`\n🏡 16 Eyes Farm House - Production API`);
-  console.log(`📡 Running on port ${PORT}`);
-  console.log(`🌐 Environment: ${process.env.NODE_ENV || 'development'}`);
-});
+if (process.env.NODE_ENV !== 'production') {
+  app.listen(PORT, () => {
+    console.log(`\n🏡 16 Eyes Farm House - Production API`);
+    console.log(`📡 Running on port ${PORT}`);
+    console.log(`🌐 Environment: ${process.env.NODE_ENV || 'development'}`);
+  });
+}
+
+module.exports = app;

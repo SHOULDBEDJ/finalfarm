@@ -2,9 +2,14 @@ import axios, { AxiosInstance, AxiosResponse } from "axios";
 
 // Determine API base URL
 const isProd = import.meta.env.PROD;
-const baseURL = isProd 
-  ? (import.meta.env.VITE_API_URL || "/api") 
-  : "http://localhost:5000/api";
+let envURL = import.meta.env.VITE_API_URL || "";
+// Ensure it ends with /api if not present
+if (envURL && !envURL.endsWith("/api") && !envURL.endsWith("/api/")) {
+  envURL = envURL.replace(/\/$/, "") + "/api";
+}
+const baseURL = isProd ? (envURL || "/api") : "http://localhost:5000/api";
+
+console.log("🌐 API Base URL:", baseURL);
 
 /**
  * Custom Axios instance that returns response.data directly via interceptors.

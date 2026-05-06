@@ -23,15 +23,8 @@ interface AuthCtx {
 const Ctx = createContext<AuthCtx | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<AuthUser | null>({
-    id: '019dfceb-7f01-70b7-a797-d59fa092d608',
-    username: 'admin',
-    fullName: 'Guest Administrator',
-    email: 'admin@example.com',
-    role: 'SuperAdmin',
-    avatarUrl: null
-  });
-  const [loading, setLoading] = useState(false);
+  const [user, setUser] = useState<AuthUser | null>(null);
+  const [loading, setLoading] = useState(true);
 
   const refresh = useCallback(async () => {
     try {

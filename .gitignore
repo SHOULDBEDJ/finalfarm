@@ -1,35 +1,34 @@
-# Logs
-logs
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-lerna-debug.log*
+# Dependencies
+node_modules/
+client/node_modules/
+server/node_modules/
 
-node_modules
-dist
-dist-ssr
-.output
-.vinxi
-.tanstack/**
-.nitro
-*.local
+# Build outputs
+dist/
+client/dist/
+.output/
+
+# Environment variables
 .env
-server/node_modules
+.env.local
+client/.env
 server/.env
 
-# Wrangler / Cloudflare
-.wrangler/
-.dev.vars
+# Database
+local.db
+server/local.db
+*.db-journal
 
-# Editor directories and files
-.vscode/*
-!.vscode/extensions.json
-.idea
+# OS files
 .DS_Store
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo

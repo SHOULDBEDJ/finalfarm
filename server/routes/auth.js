@@ -5,7 +5,7 @@ const jwt = require('jsonwebtoken');
 const db = require('../db');
 const { auth } = require('../middleware/auth');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'farmhouse-jwt-secret-change-in-production';
+const JWT_SECRET = '16eyes-farmhouse-static-secret-for-easy-deployment';
 
 // Login
 router.post('/login', async (req, res) => {

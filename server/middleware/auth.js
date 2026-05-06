@@ -8,7 +8,7 @@ const auth = (req, res, next) => {
   }
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'farmhouse-jwt-secret-change-in-production');
+    const decoded = jwt.verify(token, '16eyes-farmhouse-static-secret-for-easy-deployment');
     req.user = decoded;
     next();
   } catch (ex) {

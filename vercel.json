@@ -4,10 +4,9 @@
   "outputDirectory": "dist",
   "installCommand": "npm install && cd server && npm install",
   "functions": {
-    "api/index.js": {
+    "api/*.js": {
       "runtime": "nodejs20.x",
-      "maxDuration": 30,
-      "memory": 512
+      "maxDuration": 30
     }
   },
   "routes": [

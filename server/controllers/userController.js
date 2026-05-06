@@ -54,6 +54,22 @@ exports.updateProfile = async (req, res) => {
   }
 };
 
+exports.updateStatus = async (req, res) => {
+  const { status } = req.body;
+  if (!['Active', 'Suspended'].includes(status)) {
+    return res.status(400).json({ error: 'Invalid status' });
+  }
+  try {
+    await db.execute({
+      sql: 'UPDATE users SET status = ? WHERE id = ?',
+      args: [status, req.params.id]
+    });
+    res.json({ message: 'Status updated' });
+  } catch (err) {
+    res.status(500).json({ error: 'Server error' });
+  }
+};
+
 exports.updatePassword = async (req, res) => {
   if (req.params.id !== req.user.id && req.user.role !== 'SuperAdmin') {
     return res.status(403).json({ error: 'Forbidden' });

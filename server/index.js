@@ -92,9 +92,11 @@ app.use((err, req, res, next) => {
 });
 
 // Initialize DB schema on startup
-initSchema().catch(err => {
-  console.error('CRITICAL: Database initialization failed:', err);
-  process.exit(1);
+initSchema().then(() => {
+  console.log('✅ Database schema verified');
+}).catch(err => {
+  console.error('❌ Database initialization error:', err.message || err);
+  // Don't exit process in Vercel, allow the app to try to recover or show error on request
 });
 
 // Start server (skip in Vercel serverless environment)

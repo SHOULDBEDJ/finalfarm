@@ -17,7 +17,11 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // Auto-initialize Database
-initDb();
+initDb().then(() => {
+  console.log('🚀 Database is ready');
+}).catch(err => {
+  console.error('🛑 Database initialization failed:', err);
+});
 
 // Middleware
 const allowedOrigins = [

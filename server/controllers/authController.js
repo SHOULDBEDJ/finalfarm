@@ -12,10 +12,28 @@ exports.login = async (req, res) => {
   }
 
   try {
-    const result = await db.execute({
+    let result = await db.execute({
       sql: 'SELECT * FROM users WHERE username = ? AND deleted_at IS NULL',
       args: [username]
     });
+
+    // If no users exist at all, auto-create the admin user (Safety for fresh DB)
+    if (result.rows.length === 0 && username === 'admin') {
+      const allUsers = await db.execute('SELECT COUNT(*) as count FROM users');
+      if (allUsers.rows[0].count === 0) {
+        console.log('🆕 Fresh database detected. Creating default admin user...');
+        const hashedAdminPassword = await bcrypt.hash('admin', 10);
+        await db.execute({
+          sql: 'INSERT INTO users (id, username, password, role, full_name) VALUES (?, ?, ?, ?, ?)',
+          args: ['019dfceb-7f01-70b7-a797-d59fa092d608', 'admin', hashedAdminPassword, 'SuperAdmin', 'Administrator']
+        });
+        // Re-fetch the user
+        result = await db.execute({
+          sql: 'SELECT * FROM users WHERE username = ? AND deleted_at IS NULL',
+          args: [username]
+        });
+      }
+    }
 
     if (result.rows.length === 0) {
       return res.status(401).json({ error: 'Invalid username or password' });
